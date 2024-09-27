@@ -1,4 +1,4 @@
-require 'hurley'
+require 'faraday'
 require 'multi_json'
 require 'retriable'
 require 'thread'
@@ -136,18 +136,35 @@ module GoogleMapsService
       end
     end
 
-    # Create a new HTTP client.
-    # @return [Hurley::Client]
+    # Create a new HTTP client using Faraday.
+    # @return [Faraday::Connection]
     def new_client
-      client = Hurley::Client.new
-      client.request_options.query_class = Hurley::Query::Flat
-      client.request_options.redirection_limit = 0
-      client.header[:user_agent] = user_agent
-
+      client = Faraday.new do |faraday|
+        # Set request options (e.g., URL encoding).
+        faraday.request :url_encoded
+    
+        # Set a custom User-Agent header.
+        faraday.headers['User-Agent'] = user_agent
+    
+        # Handle any SSL options (if applicable).
+        if @ssl_options
+          faraday.ssl.update(@ssl_options)
+        end
+    
+        # Use the default adapter (e.g., Net::HTTP).
+        faraday.adapter Faraday.default_adapter
+      end
+    
+      # Apply any connection if defined.
       client.connection = @connection if @connection
-      @request_options.each_pair {|key, value| client.request_options[key] = value } if @request_options
-      @ssl_options.each_pair {|key, value| client.ssl_options[key] = value } if @ssl_options
-
+    
+      # Apply custom request options if they exist.
+      if @request_options
+        @request_options.each_pair do |key, value|
+          client.options[key] = value
+        end
+      end
+    
       client
     end
 
