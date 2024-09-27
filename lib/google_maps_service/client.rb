@@ -268,8 +268,8 @@ module GoogleMapsService
     #
     # @param [Hurley::Response] response Web API response.
     def check_response_status_code(response)
-      case response.status_code
-      when 200..300
+      case response.status
+      when 200..299
         # Do-nothing
       when 301, 302, 303, 307
         raise GoogleMapsService::Error::RedirectError.new(response), sprintf('Redirect to %s', response.header[:location])
@@ -277,7 +277,7 @@ module GoogleMapsService
         raise GoogleMapsService::Error::ClientError.new(response), 'Unauthorized'
       when 304, 400, 402...500
         raise GoogleMapsService::Error::ClientError.new(response), 'Invalid request'
-      when 500..600
+      when 500..599
         raise GoogleMapsService::Error::ServerError.new(response), 'Server error'
       end
     end
